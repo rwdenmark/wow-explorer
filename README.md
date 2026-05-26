@@ -1,6 +1,7 @@
 # wow-explorer
 
 [![Backend CI](https://github.com/rwdenmark/wow-explorer/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/rwdenmark/wow-explorer/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/rwdenmark/wow-explorer/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/rwdenmark/wow-explorer/actions/workflows/frontend-ci.yml)
 
 Local WoW character explorer. Spring Boot backend pulls from the Battle.net (Blizzard) API and Raider.IO; React frontend renders a single page with a name input, a US realm dropdown, and a character summary card with the official character render.
 
