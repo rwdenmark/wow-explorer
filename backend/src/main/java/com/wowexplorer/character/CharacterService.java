@@ -157,21 +157,14 @@ public class CharacterService {
     @SuppressWarnings("unchecked")
     private int maxedReputationCount(Map<String, Object> reputations) {
         if (reputations == null || !(reputations.get("reputations") instanceof List<?> reps)) return 0;
-        List<Map<String, Object>> entries = reps.stream()
+        // Sequential on the request thread: renown caps are memoized (Caffeine), so this
+        // pays a per-faction game-data call only on a cold cache, and concurrent requests
+        // for the same faction share a single load rather than starving a shared pool.
+        return (int) reps.stream()
                 .filter(Map.class::isInstance)
                 .map(r -> (Map<String, Object>) r)
-                .toList();
-
-        // Warm the (memoized) renown caps for this character's renown factions in parallel
-        // so the per-faction game-data lookups don't run strictly one at a time.
-        entries.parallelStream()
-                .filter(CharacterService::isRenown)
-                .mapToInt(CharacterService::factionId)
-                .filter(id -> id > 0)
-                .distinct()
-                .forEach(renown::maxRenownLevel);
-
-        return (int) entries.stream().filter(this::isMaxedReputation).count();
+                .filter(this::isMaxedReputation)
+                .count();
     }
 
     @SuppressWarnings("unchecked")

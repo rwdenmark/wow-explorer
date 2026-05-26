@@ -1,29 +1,36 @@
 package com.wowexplorer.character;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.wowexplorer.blizzard.BlizzardClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resolves a renown faction's maximum renown level from static game data, so we can
  * tell whether a character's {@code renown_level} is actually capped (= maxed).
  *
  * <p>Faction renown caps are static game data (they change only on a patch), so each
- * faction is fetched once and memoized for the lifetime of the app. A failed lookup
- * is cached as 0 to avoid hammering the API on every request.
+ * faction is fetched once and cached. The cache expires after 24h so a new patch's caps
+ * are picked up without restarting the app. A failed lookup caches 0 (re-attempted after
+ * the TTL) to avoid hammering the API on every request.
  */
 @Service
 public class RenownService {
 
     private static final Logger log = LoggerFactory.getLogger(RenownService.class);
+    private static final Duration CAP_TTL = Duration.ofHours(24);
 
     private final BlizzardClient blizzard;
-    private final Map<Integer, Integer> capCache = new ConcurrentHashMap<>();
+    private final Cache<Integer, Integer> capCache = Caffeine.newBuilder()
+            .expireAfterWrite(CAP_TTL)
+            .maximumSize(1_000)
+            .build();
 
     public RenownService(BlizzardClient blizzard) {
         this.blizzard = blizzard;
@@ -31,11 +38,7 @@ public class RenownService {
 
     /** Highest renown level for the faction, or 0 if it isn't a renown faction or lookup fails. */
     public int maxRenownLevel(int factionId) {
-        Integer cached = capCache.get(factionId);
-        if (cached != null) return cached;
-        int cap = fetchMaxRenownLevel(factionId);
-        capCache.putIfAbsent(factionId, cap);
-        return cap;
+        return capCache.get(factionId, this::fetchMaxRenownLevel);
     }
 
     @SuppressWarnings("unchecked")
