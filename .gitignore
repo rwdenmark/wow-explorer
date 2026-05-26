@@ -26,5 +26,10 @@ dist-ssr/
 .DS_Store
 .eslintcache
 
+# tsc -b build artifacts
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
 # OS
 Thumbs.db
