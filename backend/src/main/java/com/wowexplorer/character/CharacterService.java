@@ -24,15 +24,18 @@ public class CharacterService {
     private final RaiderIoClient raiderIo;
     private final CharacterLookupRepository lookupRepo;
     private final RenderBoundsService renderBounds;
+    private final RenownService renown;
 
     public CharacterService(BlizzardClient blizzard,
                             RaiderIoClient raiderIo,
                             CharacterLookupRepository lookupRepo,
-                            RenderBoundsService renderBounds) {
+                            RenderBoundsService renderBounds,
+                            RenownService renown) {
         this.blizzard = blizzard;
         this.raiderIo = raiderIo;
         this.lookupRepo = lookupRepo;
         this.renderBounds = renderBounds;
+        this.renown = renown;
     }
 
     /**
@@ -147,21 +150,55 @@ public class CharacterService {
     }
 
     /**
-     * Counts reputations the character has fully maxed. A standing is maxed when there's
-     * nothing left to earn — {@code max == 0} — which holds across both the classic tier
-     * system (Exalted, terminal friendship ranks) and capped Renown factions.
+     * Counts reputations the character has fully maxed:
+     *   - renown factions whose current renown_level has reached the faction's cap, and
+     *   - classic tier / friendship factions at their terminal standing (max == 0).
      */
     @SuppressWarnings("unchecked")
-    private static Integer maxedReputationCount(Map<String, Object> reputations) {
+    private int maxedReputationCount(Map<String, Object> reputations) {
         if (reputations == null || !(reputations.get("reputations") instanceof List<?> reps)) return 0;
-        return (int) reps.stream()
+        List<Map<String, Object>> entries = reps.stream()
                 .filter(Map.class::isInstance)
-                .map(r -> ((Map<String, Object>) r).get("standing"))
-                .filter(Map.class::isInstance)
-                .map(s -> (Map<String, Object>) s)
-                .filter(s -> s.get("max") instanceof Number max && max.intValue() == 0
-                        && s.get("raw") instanceof Number raw && raw.intValue() > 0)
-                .count();
+                .map(r -> (Map<String, Object>) r)
+                .toList();
+
+        // Warm the (memoized) renown caps for this character's renown factions in parallel
+        // so the per-faction game-data lookups don't run strictly one at a time.
+        entries.parallelStream()
+                .filter(CharacterService::isRenown)
+                .mapToInt(CharacterService::factionId)
+                .filter(id -> id > 0)
+                .distinct()
+                .forEach(renown::maxRenownLevel);
+
+        return (int) entries.stream().filter(this::isMaxedReputation).count();
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isMaxedReputation(Map<String, Object> rep) {
+        if (!(rep.get("standing") instanceof Map<?, ?> s)) return false;
+        Map<String, Object> standing = (Map<String, Object>) s;
+
+        if (isRenown(rep)) {
+            int level = standing.get("renown_level") instanceof Number n ? n.intValue() : 0;
+            int cap = renown.maxRenownLevel(factionId(rep));
+            return cap > 0 && level >= cap;
+        }
+        // Classic tier / friendship factions report max == 0 at their terminal standing.
+        return standing.get("max") instanceof Number max && max.intValue() == 0
+                && standing.get("raw") instanceof Number raw && raw.intValue() > 0;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isRenown(Map<String, Object> rep) {
+        return rep.get("standing") instanceof Map<?, ?> s
+                && ((Map<String, Object>) s).get("renown_level") instanceof Number;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static int factionId(Map<String, Object> rep) {
+        return rep.get("faction") instanceof Map<?, ?> f
+                && ((Map<String, Object>) f).get("id") instanceof Number n ? n.intValue() : 0;
     }
 
     @SuppressWarnings("unchecked")

@@ -72,6 +72,11 @@ public class BlizzardClient {
                 props.profileNamespace());
     }
 
+    /** Static game-data for a reputation faction, including {@code is_renown} and {@code renown_tiers}. */
+    public Map<String, Object> reputationFaction(int factionId) {
+        return get("/data/wow/reputation-faction/" + factionId, props.staticNamespace());
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> get(String path, String namespace) {
         log.debug("GET {} namespace={}", path, namespace);

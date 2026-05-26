@@ -25,6 +25,7 @@ class CharacterServiceTest {
     @Mock RaiderIoClient raiderIo;
     @Mock CharacterLookupRepository lookupRepo;
     @Mock RenderBoundsService renderBounds;
+    @Mock RenownService renown;
     @InjectMocks CharacterService service;
 
     @Test
@@ -45,7 +46,7 @@ class CharacterServiceTest {
         assertThat(summary.faction()).isEqualTo("Horde");
         assertThat(summary.itemLevel()).isEqualTo(636);
         assertThat(summary.achievementPoints()).isEqualTo(28310);
-        assertThat(summary.maxedReputations()).isEqualTo(2);
+        assertThat(summary.maxedReputations()).isEqualTo(3);
         assertThat(summary.totalMounts()).isEqualTo(3);
         assertThat(summary.totalPets()).isEqualTo(2);
         assertThat(summary.totalToys()).isEqualTo(1);
@@ -117,20 +118,25 @@ class CharacterServiceTest {
     private void givenBlizzardReputations() {
         given(blizzard.characterReputations("proudmoore", "zeuh")).willReturn(Map.of(
                 "reputations", List.of(
-                        // maxed: nothing left to earn (max == 0)
-                        Map.of("faction", Map.of("name", "Argent Dawn"),
+                        // maxed: terminal classic standing (max == 0)
+                        Map.of("faction", Map.of("id", 100, "name", "Argent Dawn"),
                                 "standing", Map.of("raw", 42000, "value", 0, "max", 0, "tier", 7, "name", "Exalted")),
                         // not maxed: still progressing within the tier
-                        Map.of("faction", Map.of("name", "Booty Bay"),
+                        Map.of("faction", Map.of("id", 101, "name", "Booty Bay"),
                                 "standing", Map.of("raw", 9650, "value", 650, "max", 12000, "tier", 5, "name", "Honored")),
                         // maxed friendship rank (max == 0)
-                        Map.of("faction", Map.of("name", "Brann"),
+                        Map.of("faction", Map.of("id", 102, "name", "Brann"),
                                 "standing", Map.of("raw", 20000, "value", 0, "max", 0, "tier", 8, "name", "Mastermind")),
-                        // capped Renown still earning toward next level -> not maxed
-                        Map.of("faction", Map.of("name", "Hallowfall Arathi"),
-                                "standing", Map.of("raw", 62500, "value", 0, "max", 2500, "renown_level", 25, "name", "Renown 25"))
+                        // renown at its cap -> maxed
+                        Map.of("faction", Map.of("id", 2510, "name", "Valdrakken Accord"),
+                                "standing", Map.of("raw", 75000, "value", 0, "max", 2500, "renown_level", 30, "name", "Renown 30")),
+                        // renown below its cap -> not maxed
+                        Map.of("faction", Map.of("id", 2564, "name", "Loamm Niffen"),
+                                "standing", Map.of("raw", 25000, "value", 0, "max", 2500, "renown_level", 10, "name", "Renown 10"))
                 )
         ));
+        given(renown.maxRenownLevel(2510)).willReturn(30); // Valdrakken Accord cap -> level 30 is maxed
+        given(renown.maxRenownLevel(2564)).willReturn(20); // Loamm Niffen cap -> level 10 not maxed
     }
 
     private void givenRaiderIo() {
