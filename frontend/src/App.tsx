@@ -117,7 +117,7 @@ function CharacterCard({ character }: { character: CharacterSummary }) {
           <img
             src={character.renderUrl}
             alt={`${character.name} render`}
-            className="max-h-[600px] object-contain scale-[1.75] origin-center"
+            className="max-h-[600px] object-contain scale-[1.75] -translate-y-8 origin-center"
           />
         ) : (
           <p className="text-zinc-500">No render available.</p>
