@@ -1,0 +1,30 @@
+# Env / secrets
+.env
+*.env.local
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.log
+HELP.md
+.mvn/
+mvnw
+mvnw.cmd
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+.DS_Store
+.eslintcache
+
+# OS
+Thumbs.db

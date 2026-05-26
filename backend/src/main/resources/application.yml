@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wow-explorer
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:wow_explorer}
+    username: ${POSTGRES_USER:wow}
+    password: ${POSTGRES_PASSWORD:wow}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+blizzard:
+  client-id: ${BLIZZARD_CLIENT_ID}
+  client-secret: ${BLIZZARD_CLIENT_SECRET}
+  region: us
+  locale: en_US
+  oauth-base-url: https://oauth.battle.net
+  api-base-url: https://us.api.blizzard.com
+
+raiderio:
+  base-url: https://raider.io/api/v1
+
+logging:
+  level:
+    com.wowexplorer: DEBUG
+    org.springframework.web.client.RestClient: INFO
