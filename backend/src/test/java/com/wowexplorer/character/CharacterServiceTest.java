@@ -24,6 +24,7 @@ class CharacterServiceTest {
     @Mock BlizzardClient blizzard;
     @Mock RaiderIoClient raiderIo;
     @Mock CharacterLookupRepository lookupRepo;
+    @Mock RenderBoundsService renderBounds;
     @InjectMocks CharacterService service;
 
     @Test
@@ -32,15 +33,22 @@ class CharacterServiceTest {
         givenBlizzardMedia();
         givenBlizzardAchievements();
         givenBlizzardMounts();
+        givenBlizzardPets();
+        givenBlizzardToys();
+        givenBlizzardReputations();
         givenRaiderIo();
 
         CharacterSummary summary = service.getSummary("proudmoore", "Zeuh");
 
         assertThat(summary.name()).isEqualTo("Zeuh");
         assertThat(summary.realm()).isEqualTo("Proudmoore");
+        assertThat(summary.faction()).isEqualTo("Horde");
         assertThat(summary.itemLevel()).isEqualTo(636);
         assertThat(summary.achievementPoints()).isEqualTo(28310);
+        assertThat(summary.maxedReputations()).isEqualTo(2);
         assertThat(summary.totalMounts()).isEqualTo(3);
+        assertThat(summary.totalPets()).isEqualTo(2);
+        assertThat(summary.totalToys()).isEqualTo(1);
         assertThat(summary.raidProgress()).isEqualTo("8/8 H");
         assertThat(summary.raiderIoScore()).isEqualTo(2450.0);
         assertThat(summary.renderUrl()).isEqualTo("https://render/main-raw.png");
@@ -69,7 +77,8 @@ class CharacterServiceTest {
                 "equipped_item_level", 636,
                 "realm", Map.of("name", "Proudmoore", "slug", "proudmoore"),
                 "character_class", Map.of("name", "Mage"),
-                "race", Map.of("name", "Troll")
+                "race", Map.of("name", "Troll"),
+                "faction", Map.of("type", "HORDE", "name", "Horde")
         ));
     }
 
@@ -90,6 +99,37 @@ class CharacterServiceTest {
     private void givenBlizzardMounts() {
         given(blizzard.characterMounts("proudmoore", "zeuh")).willReturn(Map.of(
                 "mounts", List.of(Map.of("id", 1), Map.of("id", 2), Map.of("id", 3))
+        ));
+    }
+
+    private void givenBlizzardPets() {
+        given(blizzard.characterPets("proudmoore", "zeuh")).willReturn(Map.of(
+                "pets", List.of(Map.of("id", 1), Map.of("id", 2))
+        ));
+    }
+
+    private void givenBlizzardToys() {
+        given(blizzard.characterToys("proudmoore", "zeuh")).willReturn(Map.of(
+                "toys", List.of(Map.of("id", 1))
+        ));
+    }
+
+    private void givenBlizzardReputations() {
+        given(blizzard.characterReputations("proudmoore", "zeuh")).willReturn(Map.of(
+                "reputations", List.of(
+                        // maxed: nothing left to earn (max == 0)
+                        Map.of("faction", Map.of("name", "Argent Dawn"),
+                                "standing", Map.of("raw", 42000, "value", 0, "max", 0, "tier", 7, "name", "Exalted")),
+                        // not maxed: still progressing within the tier
+                        Map.of("faction", Map.of("name", "Booty Bay"),
+                                "standing", Map.of("raw", 9650, "value", 650, "max", 12000, "tier", 5, "name", "Honored")),
+                        // maxed friendship rank (max == 0)
+                        Map.of("faction", Map.of("name", "Brann"),
+                                "standing", Map.of("raw", 20000, "value", 0, "max", 0, "tier", 8, "name", "Mastermind")),
+                        // capped Renown still earning toward next level -> not maxed
+                        Map.of("faction", Map.of("name", "Hallowfall Arathi"),
+                                "standing", Map.of("raw", 62500, "value", 0, "max", 2500, "renown_level", 25, "name", "Renown 25"))
+                )
         ));
     }
 

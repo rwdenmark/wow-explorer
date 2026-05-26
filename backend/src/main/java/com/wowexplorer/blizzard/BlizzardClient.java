@@ -57,6 +57,21 @@ public class BlizzardClient {
                 props.profileNamespace());
     }
 
+    public Map<String, Object> characterPets(String realmSlug, String name) {
+        return get("/profile/wow/character/" + realmSlug + "/" + name + "/collections/pets",
+                props.profileNamespace());
+    }
+
+    public Map<String, Object> characterToys(String realmSlug, String name) {
+        return get("/profile/wow/character/" + realmSlug + "/" + name + "/collections/toys",
+                props.profileNamespace());
+    }
+
+    public Map<String, Object> characterReputations(String realmSlug, String name) {
+        return get("/profile/wow/character/" + realmSlug + "/" + name + "/reputations",
+                props.profileNamespace());
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> get(String path, String namespace) {
         log.debug("GET {} namespace={}", path, namespace);

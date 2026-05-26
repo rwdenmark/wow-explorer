@@ -7,11 +7,13 @@ import com.wowexplorer.raiderio.RaiderIoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Service
 public class CharacterService {
@@ -21,13 +23,16 @@ public class CharacterService {
     private final BlizzardClient blizzard;
     private final RaiderIoClient raiderIo;
     private final CharacterLookupRepository lookupRepo;
+    private final RenderBoundsService renderBounds;
 
     public CharacterService(BlizzardClient blizzard,
                             RaiderIoClient raiderIo,
-                            CharacterLookupRepository lookupRepo) {
+                            CharacterLookupRepository lookupRepo,
+                            RenderBoundsService renderBounds) {
         this.blizzard = blizzard;
         this.raiderIo = raiderIo;
         this.lookupRepo = lookupRepo;
+        this.renderBounds = renderBounds;
     }
 
     /**
@@ -45,6 +50,10 @@ public class CharacterService {
         Map<String, Object> media = blizzard.characterMedia(slug, lowerName);
         Map<String, Object> achievements = blizzard.characterAchievements(slug, lowerName);
         Map<String, Object> mounts = blizzard.characterMounts(slug, lowerName);
+        // Collections/reputations can 404 for sparse characters; treat absent as empty.
+        Map<String, Object> pets = optional(() -> blizzard.characterPets(slug, lowerName));
+        Map<String, Object> toys = optional(() -> blizzard.characterToys(slug, lowerName));
+        Map<String, Object> reputations = optional(() -> blizzard.characterReputations(slug, lowerName));
 
         Map<String, Object> rio;
         try {
@@ -54,22 +63,40 @@ public class CharacterService {
             rio = Map.of();
         }
 
+        String renderUrl = pickRenderUrl(media);
         CharacterSummary summary = new CharacterSummary(
                 (String) profile.get("name"),
                 nested(profile, "realm", "name"),
                 slug,
                 nested(profile, "character_class", "name"),
                 nested(profile, "race", "name"),
+                nested(profile, "faction", "name"),
                 asInt(profile.get("equipped_item_level")),
                 raidProgressionSummary(rio),
                 raiderIoScore(rio),
                 asInt(achievements.get("total_points")),
-                mountCount(mounts),
-                pickRenderUrl(media)
+                maxedReputationCount(reputations),
+                collectionSize(mounts, "mounts"),
+                collectionSize(pets, "pets"),
+                collectionSize(toys, "toys"),
+                renderUrl,
+                renderBounds.analyze(renderUrl)
         );
 
         lookupRepo.save(new CharacterLookup(slug, lowerName));
         return summary;
+    }
+
+    /** Recently looked-up distinct characters, newest first, for the "Recently viewed" panel. */
+    @Transactional(readOnly = true)
+    public List<RecentCharacter> recentLookups(int limit) {
+        return lookupRepo.findRecentDistinct(PageRequest.of(0, limit));
+    }
+
+    /** Removes a character from lookup history so it no longer appears in "recently viewed". */
+    @Transactional
+    public void forgetLookup(String realmSlug, String name) {
+        lookupRepo.deleteAllForCharacter(realmSlug.toLowerCase(), name.toLowerCase());
     }
 
     @SuppressWarnings("unchecked")
@@ -105,10 +132,36 @@ public class CharacterService {
                 .findFirst();
     }
 
+    /** Runs an optional Blizzard call, treating a 404 (or empty body) as an empty result. */
+    private static Map<String, Object> optional(Supplier<Map<String, Object>> call) {
+        try {
+            Map<String, Object> result = call.get();
+            return result != null ? result : Map.of();
+        } catch (NotFoundException e) {
+            return Map.of();
+        }
+    }
+
+    private static int collectionSize(Map<String, Object> source, String key) {
+        return source != null && source.get(key) instanceof List<?> list ? list.size() : 0;
+    }
+
+    /**
+     * Counts reputations the character has fully maxed. A standing is maxed when there's
+     * nothing left to earn — {@code max == 0} — which holds across both the classic tier
+     * system (Exalted, terminal friendship ranks) and capped Renown factions.
+     */
     @SuppressWarnings("unchecked")
-    private static Integer mountCount(Map<String, Object> mounts) {
-        List<?> mountList = (List<?>) mounts.get("mounts");
-        return mountList == null ? 0 : mountList.size();
+    private static Integer maxedReputationCount(Map<String, Object> reputations) {
+        if (reputations == null || !(reputations.get("reputations") instanceof List<?> reps)) return 0;
+        return (int) reps.stream()
+                .filter(Map.class::isInstance)
+                .map(r -> ((Map<String, Object>) r).get("standing"))
+                .filter(Map.class::isInstance)
+                .map(s -> (Map<String, Object>) s)
+                .filter(s -> s.get("max") instanceof Number max && max.intValue() == 0
+                        && s.get("raw") instanceof Number raw && raw.intValue() > 0)
+                .count();
     }
 
     @SuppressWarnings("unchecked")

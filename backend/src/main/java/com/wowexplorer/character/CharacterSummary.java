@@ -1,14 +1,16 @@
 package com.wowexplorer.character;
 
 /**
- * The single record returned to the frontend. Every field matches a line on the UI:
- *   Character: {name} {realm}
+ * The single record returned to the frontend. Every field maps to a line on the UI:
  *   Item Level: {itemLevel}
  *   Raid Progress: {raidProgress}
  *   Raider IO: {raiderIoScore}
  *   Achievements: {achievementPoints}
+ *   Maxed Reputations: {maxedReputations}
  *   Total Mounts: {totalMounts}
- *   (rendered image: renderUrl)
+ *   Total Pets: {totalPets}
+ *   Total Toys: {totalToys}
+ *   (image box: name, realm, race + class, renderUrl)
  */
 public record CharacterSummary(
         String name,
@@ -16,10 +18,15 @@ public record CharacterSummary(
         String realmSlug,
         String characterClass,
         String race,
+        String faction,
         Integer itemLevel,
         String raidProgress,
         Double raiderIoScore,
         Integer achievementPoints,
+        Integer maxedReputations,
         Integer totalMounts,
-        String renderUrl
+        Integer totalPets,
+        Integer totalToys,
+        String renderUrl,
+        RenderBounds renderBounds
 ) {}
