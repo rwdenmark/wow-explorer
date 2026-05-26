@@ -99,12 +99,11 @@ function CharacterCard({ character }: { character: CharacterSummary }) {
   return (
     <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="bg-wow-frame border border-zinc-800 rounded-lg p-6 space-y-2">
-        <Row label="Character" value={`${character.name} ${character.realm ?? ""}`} />
+        <Row label="Achievements" value={character.achievementPoints} />
+        <Row label="Total Mounts" value={character.totalMounts} />
         <Row label="Item Level" value={character.itemLevel} />
         <Row label="Raid Progress" value={character.raidProgress ?? "—"} />
         <Row label="Raider IO" value={character.raiderIoScore?.toFixed(1) ?? "—"} />
-        <Row label="Achievements" value={character.achievementPoints} />
-        <Row label="Total Mounts" value={character.totalMounts} />
 
         {(character.characterClass || character.race) && (
           <p className="text-xs text-zinc-500 pt-4 border-t border-zinc-800 mt-4">
