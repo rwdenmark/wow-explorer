@@ -112,12 +112,12 @@ function CharacterCard({ character }: { character: CharacterSummary }) {
         )}
       </div>
 
-      <div className="bg-wow-frame border border-zinc-800 rounded-lg p-4 flex items-center justify-center min-h-[400px]">
+      <div className="bg-wow-frame border border-zinc-800 rounded-lg p-4 flex items-center justify-center min-h-[400px] overflow-hidden">
         {character.renderUrl ? (
           <img
             src={character.renderUrl}
             alt={`${character.name} render`}
-            className="max-h-[600px] object-contain"
+            className="max-h-[600px] object-contain scale-[1.75] origin-center"
           />
         ) : (
           <p className="text-zinc-500">No render available.</p>
