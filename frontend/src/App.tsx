@@ -199,7 +199,7 @@ function RecentlyViewed({
 function CharacterCard({ character }: { character: CharacterSummary }) {
   return (
     <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-wow-frame border border-zinc-800 rounded-lg p-6 flex flex-col">
+      <div className="bg-wow-frame border border-zinc-800 rounded-lg px-6 pt-6 pb-3 flex flex-col">
         <h2 className="text-lg font-bold text-wow-gold mb-4">Statistics</h2>
 
         <div className="space-y-2">
