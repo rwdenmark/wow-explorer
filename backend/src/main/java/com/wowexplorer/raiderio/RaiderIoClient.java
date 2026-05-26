@@ -22,8 +22,8 @@ public class RaiderIoClient {
 
     private final RestClient restClient;
 
-    public RaiderIoClient(RestClient raiderIoClient) {
-        this.restClient = raiderIoClient;
+    public RaiderIoClient(RestClient raiderIoRestClient) {
+        this.restClient = raiderIoRestClient;
     }
 
     @SuppressWarnings("unchecked")

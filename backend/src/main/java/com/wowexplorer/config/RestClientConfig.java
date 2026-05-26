@@ -23,7 +23,7 @@ public class RestClientConfig {
     }
 
     @Bean
-    public RestClient raiderIoClient(@Value("${raiderio.base-url}") String baseUrl) {
+    public RestClient raiderIoRestClient(@Value("${raiderio.base-url}") String baseUrl) {
         return RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
