@@ -8,12 +8,10 @@ on:
       - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
 
 jobs:
   build:
+    name: Backend build
     runs-on: ubuntu-latest
     defaults:
       run:
