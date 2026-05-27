@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # Hosts like Render inject the listen port via $PORT; default to 8080 locally.
+  port: ${PORT:8080}
 
 spring:
   application:

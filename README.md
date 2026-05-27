@@ -84,6 +84,12 @@ Open http://localhost:5173. The page lands pre-populated with Zeuh / Proudmoore.
 > Postgres is left running when the backend stops (`lifecycle-management: start-only`). Stop it
 > with `docker compose down`. To opt out of the auto-start, set `spring.docker.compose.enabled: false`.
 
+## Deploy (free hosting)
+
+Single-service deploy (SPA baked into the Spring Boot jar) on Render free + Neon free
+Postgres. See [DEPLOY.md](DEPLOY.md). Local build of the production image:
+`docker build -t wow-explorer .` from the repo root.
+
 ## How auth works
 
 The backend exchanges your Client ID + Secret for a Battle.net OAuth access token (Client Credentials grant), caches it until ~60 seconds before expiry, and attaches it as a Bearer token on every API call. The token never reaches the frontend. To rotate, change the values in `.env` and restart the backend.

@@ -1,0 +1,17 @@
+# Keep the build context small and never copy local secrets or build output into layers.
+.env
+*.env.local
+.git
+.github
+.idea
+.vscode
+
+# Rebuilt inside the image
+**/node_modules
+**/dist
+backend/target
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db
