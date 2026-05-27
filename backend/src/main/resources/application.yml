@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: wow-explorer
+  # Load the repo-root .env (KEY=VALUE) so BLIZZARD_* and POSTGRES_* resolve when
+  # running from the IDE or `mvn spring-boot:run`. Working dir is backend/, so it's
+  # one level up. `optional:` keeps tests/CI green when no .env is present.
+  config:
+    import: "optional:file:../.env[.properties]"
+  # Bring up the Postgres container automatically on startup and connect to it.
+  # `start-only` leaves it running after the app stops (matches docker compose up -d).
+  docker:
+    compose:
+      file: ../docker-compose.yml
+      lifecycle-management: start-only
   datasource:
     url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:wow_explorer}
     username: ${POSTGRES_USER:wow}

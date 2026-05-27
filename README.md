@@ -32,21 +32,40 @@ wow-explorer/
 
 ## Run it
 
-```bash
-# 1. From the project root: bring up Postgres
-docker compose up -d
+First time only: copy `.env.example` to `.env` and fill in your Battle.net Client ID + Secret.
 
-# 2. Backend (separate terminal)
+The backend starts Postgres for you: on startup it runs `docker compose up`, waits for the
+healthcheck, loads `.env`, and connects — via Spring Boot's docker-compose support
+(`spring-boot-docker-compose`) plus `spring.config.import` of the repo-root `.env`. So you
+do **not** need a separate `docker compose up -d` or to export `.env` by hand.
+
+**One command (Windows):**
+
+```powershell
+.\start.ps1
+```
+
+Brings up Postgres, the backend (`mvn spring-boot:run`), and the frontend, each in its own
+window. Flags: `-SkipFrontend`, `-SkipBackend`.
+
+**Or run the pieces yourself:**
+
+```bash
+# Backend — from your IDE (run WowExplorerApplication) or the CLI.
+# Postgres + .env are handled automatically; Docker Desktop must be running.
 cd backend
 mvn spring-boot:run
 
-# 3. Frontend (separate terminal)
+# Frontend (separate terminal)
 cd frontend
 npm install
 npm run dev
 ```
 
 Open http://localhost:5173. The page lands pre-populated with Zeuh / Proudmoore. Hit Search.
+
+> Postgres is left running when the backend stops (`lifecycle-management: start-only`). Stop it
+> with `docker compose down`. To opt out of the auto-start, set `spring.docker.compose.enabled: false`.
 
 ## How auth works
 
