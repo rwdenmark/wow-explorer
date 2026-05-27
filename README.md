@@ -23,6 +23,23 @@ wow-explorer/
 └── frontend/                  Vite + React + TS
 ```
 
+## IDE setup (IntelliJ)
+
+The Maven project lives in `backend/`, not at the repo root. If you open the **root**
+`wow-explorer/` folder, IntelliJ creates a bare generic module and never imports
+`backend/pom.xml` — so no dependencies are on the classpath, symbols don't resolve, and the
+editor shows methods/classes/variables in plain white (only keywords/strings get colored).
+You may also see a "Cannot load N facets" error.
+
+Fix it one of two ways:
+
+- **Monorepo (keeps `frontend/` visible):** right-click `backend/pom.xml` in the Project tree
+  → **Add as Maven Project**.
+- **Backend only:** open IntelliJ directly on `backend/pom.xml` → **Open as Project**.
+
+Verify under **Project Structure → Modules**: you should see `wow-explorer-backend` with
+libraries attached, not an empty module.
+
 ## Prereqs
 
 - Docker Desktop
