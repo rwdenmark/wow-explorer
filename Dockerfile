@@ -24,7 +24,7 @@ COPY --from=frontend /app/frontend/dist ./src/main/resources/static
 RUN mvn -B -q clean package -DskipTests
 
 # ---- Stage 3: runtime ----
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=backend /app/target/*.jar app.jar
 # Use up to 75% of the container's memory for the heap (tuned for a 512 MB free tier).
