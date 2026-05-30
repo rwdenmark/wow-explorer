@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 public class CharacterService {
 
     private static final Logger log = LoggerFactory.getLogger(CharacterService.class);
+    private static final int MAX_LOOKUP_HISTORY = 50;
 
     private final BlizzardClient blizzard;
     private final RaiderIoClient raiderIo;
@@ -87,7 +88,15 @@ public class CharacterService {
         );
 
         lookupRepo.save(new CharacterLookup(slug, lowerName));
+        pruneLookupHistory();
         return summary;
+    }
+
+    private void pruneLookupHistory() {
+        List<Long> cutoff = lookupRepo.findIdsNewestFirst(PageRequest.of(MAX_LOOKUP_HISTORY - 1, 1));
+        if (cutoff != null && !cutoff.isEmpty()) {
+            lookupRepo.deleteByIdLessThan(cutoff.get(0));
+        }
     }
 
     /** Recently looked-up distinct characters, newest first, for the "Recently viewed" panel. */

@@ -145,7 +145,7 @@ function RecentlyViewed({
   onSelect: (slug: string, name: string) => void;
   onForget: (slug: string, name: string) => void;
 }) {
-  // The character we're viewing is excluded; show the next 3 distinct ones.
+  // The character we're viewing is excluded; show the next 5 distinct ones.
   const items = recent
     .filter(
       r =>
@@ -154,7 +154,7 @@ function RecentlyViewed({
           r.name.toLowerCase() === current.name.toLowerCase()
         )
     )
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (items.length === 0) return null;
 
@@ -200,7 +200,7 @@ function CharacterCard({ character }: { character: CharacterSummary }) {
   return (
     <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="bg-wow-frame border border-zinc-800 rounded-lg px-6 pt-6 pb-3 flex flex-col">
-        <h2 className="text-lg font-bold text-wow-gold mb-4">Statistics</h2>
+        <h2 className="text-lg font-bold text-wow-gold mb-4">Progress</h2>
 
         <div className="space-y-2">
           <Row label="Item Level" value={character.itemLevel} />
@@ -208,7 +208,9 @@ function CharacterCard({ character }: { character: CharacterSummary }) {
           <Row label="Raider IO" value={character.raiderIoScore ? character.raiderIoScore.toFixed(1) : "—"} />
         </div>
 
-        <div className="space-y-2 mt-9">
+        <h2 className="text-lg font-bold text-wow-gold mt-6 mb-4">Statistics</h2>
+
+        <div className="space-y-2">
           <Row label="Achievements" value={character.achievementPoints} />
           <Row label="Maxed Reputations" value={character.maxedReputations} />
           <Row label="Total Mounts" value={character.totalMounts} />

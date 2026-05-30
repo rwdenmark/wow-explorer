@@ -29,4 +29,11 @@ public interface CharacterLookupRepository extends JpaRepository<CharacterLookup
     @Modifying
     @Query("delete from CharacterLookup c where c.realmSlug = :realmSlug and c.characterName = :name")
     int deleteAllForCharacter(@Param("realmSlug") String realmSlug, @Param("name") String name);
+
+    @Query("select c.id from CharacterLookup c order by c.id desc")
+    List<Long> findIdsNewestFirst(Pageable pageable);
+
+    @Modifying
+    @Query("delete from CharacterLookup c where c.id < :minId")
+    int deleteByIdLessThan(@Param("minId") Long minId);
 }
