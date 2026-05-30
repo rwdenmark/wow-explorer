@@ -5,7 +5,7 @@
 # Build context MUST be the repo root (this Dockerfile needs both frontend/ and backend/).
 
 # ---- Stage 1: build the React frontend -> frontend/dist ----
-FROM node:20-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
