@@ -13,7 +13,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---- Stage 2: build the Spring Boot jar with the SPA baked in ----
-FROM maven:3-eclipse-temurin-26 AS backend
+FROM maven:3-eclipse-temurin-21 AS backend
 WORKDIR /app
 # Resolve dependencies first so this layer is cached unless pom.xml changes.
 COPY backend/pom.xml ./
