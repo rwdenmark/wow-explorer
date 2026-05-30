@@ -1,4 +1,3 @@
--- Records every character lookup. Useful for history / analytics.
 CREATE TABLE character_lookup (
     id            BIGSERIAL PRIMARY KEY,
     realm_slug    VARCHAR(100) NOT NULL,

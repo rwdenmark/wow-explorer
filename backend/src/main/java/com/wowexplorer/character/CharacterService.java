@@ -39,11 +39,6 @@ public class CharacterService {
         this.renown = renown;
     }
 
-    /**
-     * Pulls the full character summary used by the single-page UI.
-     * Sequential by design — easy to read. Parallelize later with CompletableFuture
-     * if the ~1s response time becomes a problem.
-     */
     @Transactional
     @Cacheable(value = CacheConfig.CHARACTER_CACHE, key = "#realmSlug.toLowerCase() + '/' + #name.toLowerCase()")
     public CharacterSummary getSummary(String realmSlug, String name) {
@@ -99,13 +94,11 @@ public class CharacterService {
         }
     }
 
-    /** Recently looked-up distinct characters, newest first, for the "Recently viewed" panel. */
     @Transactional(readOnly = true)
     public List<RecentCharacter> recentLookups(int limit) {
         return lookupRepo.findRecentDistinct(PageRequest.of(0, limit));
     }
 
-    /** Removes a character from lookup history so it no longer appears in "recently viewed". */
     @Transactional
     public void forgetLookup(String realmSlug, String name) {
         lookupRepo.deleteAllForCharacter(realmSlug.toLowerCase(), name.toLowerCase());
@@ -144,7 +137,7 @@ public class CharacterService {
                 .findFirst();
     }
 
-    /** Runs an optional Blizzard call, treating a 404 (or empty body) as an empty result. */
+    /** Treats a 404 or empty body as an empty result. */
     private static Map<String, Object> optional(Supplier<Map<String, Object>> call) {
         try {
             Map<String, Object> result = call.get();
