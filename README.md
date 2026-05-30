@@ -84,12 +84,6 @@ Open http://localhost:5173. The page lands pre-populated with Zeuh / Proudmoore.
 > Postgres is left running when the backend stops (`lifecycle-management: start-only`). Stop it
 > with `docker compose down`. To opt out of the auto-start, set `spring.docker.compose.enabled: false`.
 
-## Deploy (free hosting)
-
-Single-service deploy (SPA baked into the Spring Boot jar) on Render free + Neon free
-Postgres. See [DEPLOY.md](DEPLOY.md). Local build of the production image:
-`docker build -t wow-explorer .` from the repo root.
-
 ## How auth works
 
 The backend exchanges your Client ID + Secret for a Battle.net OAuth access token (Client Credentials grant), caches it until ~60 seconds before expiry, and attaches it as a Bearer token on every API call. The token never reaches the frontend. To rotate, change the values in `.env` and restart the backend.
@@ -115,10 +109,6 @@ If Raider.IO has no profile for the character (common for low-played characters)
 
 Blizzard allows 100 req/sec and 36 000 req/hour per Client ID. Caffeine fronts every call so repeated lookups stay free. If you start running batch jobs against this, watch the rate ceiling and add Resilience4j retries.
 
-## True 3D character viewer
-
-The render currently shown is Blizzard's official 2D `main-raw` PNG — high resolution, official, no extra deps. If you want a rotatable 3D model later, embed Wowhead's Model Viewer (`https://wowhead.github.io/modelviewer.js/`) and feed it the character's `appearance` block from the Blizzard profile response. That swap touches `CharacterCard` in `frontend/src/App.tsx` only.
-
 ## Tests
 
 ```bash
@@ -128,10 +118,6 @@ mvn test
 
 `CharacterServiceTest` mocks `BlizzardClient` and `RaiderIoClient` and asserts the summary is assembled correctly, including the Raider.IO-missing fallback.
 
-## Next steps (good learning exercises)
+## Deploying
 
-1. Parallelize the four Blizzard calls in `CharacterService.getSummary` with `CompletableFuture` (currently sequential, ~1 s).
-2. Add a `/api/characters/recent` endpoint backed by `CharacterLookup`. Wire it to a "Recently viewed" panel.
-3. Add user login with Battle.net (Authorization Code + PKCE) so a user can see their own characters.
-4. Swap the static render for the Wowhead 3D Model Viewer.
-5. Add Resilience4j circuit breakers around the Blizzard and Raider.IO clients.
+See [DEPLOY.md](DEPLOY.md) for the Render + Neon free-tier setup.

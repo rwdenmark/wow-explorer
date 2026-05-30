@@ -9,11 +9,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 
-/**
- * Raider.IO is a separate, free, no-auth API. We use it for two display values
- * Blizzard does not expose cleanly: current-season Mythic+ score and
- * a one-line raid progression summary.
- */
+/** Current-season Mythic+ score and raid progression — fields Blizzard's API doesn't expose cleanly. */
 @Component
 public class RaiderIoClient {
 

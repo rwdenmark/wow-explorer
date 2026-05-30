@@ -44,7 +44,7 @@ public class CharacterService {
      * if the ~1s response time becomes a problem.
      */
     @Transactional
-    @Cacheable(value = CacheConfig.CHARACTER_CACHE, key = "#realmSlug + '/' + #name.toLowerCase()")
+    @Cacheable(value = CacheConfig.CHARACTER_CACHE, key = "#realmSlug.toLowerCase() + '/' + #name.toLowerCase()")
     public CharacterSummary getSummary(String realmSlug, String name) {
         String slug = realmSlug.toLowerCase();
         String lowerName = name.toLowerCase();

@@ -17,6 +17,7 @@ mvnw.cmd
 *.iws
 *.ipr
 .vscode/
+.claude/
 
 # Node / Vite
 node_modules/
