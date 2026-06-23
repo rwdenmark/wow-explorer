@@ -9,18 +9,18 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const fetchRealms = () => getJson<Realm[]>("/api/realms");
+export const fetchRealms = () => getJson<Realm[]>("api/realms");
 
 export const fetchCharacter = (realmSlug: string, name: string) =>
   getJson<CharacterSummary>(
-    `/api/characters/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name)}`
+    `api/characters/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name)}`
   );
 
-export const fetchRecent = () => getJson<RecentCharacter[]>("/api/characters/recent");
+export const fetchRecent = () => getJson<RecentCharacter[]>("api/characters/recent");
 
 export async function deleteRecent(realmSlug: string, name: string): Promise<void> {
   const res = await fetch(
-    `/api/characters/recent/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name)}`,
+    `api/characters/recent/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name)}`,
     { method: "DELETE" }
   );
   if (!res.ok) {

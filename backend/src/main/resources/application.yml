@@ -1,6 +1,10 @@
 server:
   # Hosts like Render inject the listen port via $PORT; default to 8080 locally.
   port: ${PORT:8080}
+  # Empty by default, so the app serves at the root (Render). Set APP_BASE_PATH=/wow
+  # to serve under a subpath behind the Tailscale Funnel path mapping.
+  servlet:
+    context-path: ${APP_BASE_PATH:}
 
 spring:
   application:
