@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 @Service
@@ -45,21 +49,29 @@ public class CharacterService {
         String slug = realmSlug.toLowerCase();
         String lowerName = name.toLowerCase();
 
-        Map<String, Object> profile = blizzard.characterProfile(slug, lowerName);
-        Map<String, Object> media = blizzard.characterMedia(slug, lowerName);
-        Map<String, Object> achievements = blizzard.characterAchievements(slug, lowerName);
-        Map<String, Object> mounts = blizzard.characterMounts(slug, lowerName);
-        // Collections/reputations can 404 for sparse characters; treat absent as empty.
-        Map<String, Object> pets = optional(() -> blizzard.characterPets(slug, lowerName));
-        Map<String, Object> toys = optional(() -> blizzard.characterToys(slug, lowerName));
-        Map<String, Object> reputations = optional(() -> blizzard.characterReputations(slug, lowerName));
+        // Fan the independent Blizzard and Raider.IO calls out concurrently on virtual
+        // threads so a lookup costs roughly one round-trip instead of the sum of them all.
+        // Each call hits a different endpoint for the same character and is independent.
+        Map<String, Object> profile, media, achievements, mounts, pets, toys, reputations, rio;
+        try (ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<Map<String, Object>> profileF = pool.submit(() -> blizzard.characterProfile(slug, lowerName));
+            Future<Map<String, Object>> mediaF = pool.submit(() -> blizzard.characterMedia(slug, lowerName));
+            Future<Map<String, Object>> achievementsF = pool.submit(() -> blizzard.characterAchievements(slug, lowerName));
+            Future<Map<String, Object>> mountsF = pool.submit(() -> blizzard.characterMounts(slug, lowerName));
+            // Collections/reputations can 404 for sparse characters; treat absent as empty.
+            Future<Map<String, Object>> petsF = pool.submit(() -> optional(() -> blizzard.characterPets(slug, lowerName)));
+            Future<Map<String, Object>> toysF = pool.submit(() -> optional(() -> blizzard.characterToys(slug, lowerName)));
+            Future<Map<String, Object>> reputationsF = pool.submit(() -> optional(() -> blizzard.characterReputations(slug, lowerName)));
+            Future<Map<String, Object>> rioF = pool.submit(() -> raiderIoOrEmpty(slug, name));
 
-        Map<String, Object> rio;
-        try {
-            rio = raiderIo.characterProfile(slug, name);
-        } catch (NotFoundException nf) {
-            log.info("No Raider.IO profile for {}-{}, returning Blizzard-only data", slug, name);
-            rio = Map.of();
+            profile = get(profileF);
+            media = get(mediaF);
+            achievements = get(achievementsF);
+            mounts = get(mountsF);
+            pets = get(petsF);
+            toys = get(toysF);
+            reputations = get(reputationsF);
+            rio = get(rioF);
         }
 
         String renderUrl = pickRenderUrl(media);
@@ -144,6 +156,31 @@ public class CharacterService {
             return result != null ? result : Map.of();
         } catch (NotFoundException e) {
             return Map.of();
+        }
+    }
+
+    /** Raider.IO has its own coverage; a missing profile is not an error for us. */
+    private Map<String, Object> raiderIoOrEmpty(String slug, String name) {
+        try {
+            return raiderIo.characterProfile(slug, name);
+        } catch (NotFoundException nf) {
+            log.info("No Raider.IO profile for {}-{}, returning Blizzard-only data", slug, name);
+            return Map.of();
+        }
+    }
+
+    /** Unwraps a future, re-throwing the original RuntimeException (e.g. NotFoundException). */
+    private static <T> T get(Future<T> future) {
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException re) throw re;
+            if (cause instanceof Error err) throw err;
+            throw new IllegalStateException(cause);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Character lookup interrupted", ie);
         }
     }
 
